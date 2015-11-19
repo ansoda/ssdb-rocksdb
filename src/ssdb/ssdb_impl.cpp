@@ -42,14 +42,15 @@ SSDB* SSDB::open(const Options &opt, const std::string &dir){
 	ssdb->options.max_open_files = opt.max_open_files;
 
 	rocksdb::BlockBasedTableOptions tableOptions;
-	tableOptions.filter_policy = std::shared_ptr<const rocksdb::FilterPolicy>(rocksdb::NewBloomFilterPolicy(10));
+	tableOptions.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10));
 	tableOptions.block_cache = rocksdb::NewLRUCache(opt.cache_size * 1048576);
 	tableOptions.block_size = opt.block_size * 1024;
-	ssdb->options.table_factory = std::shared_ptr<rocksdb::TableFactory>(rocksdb::NewBlockBasedTableFactory(tableOptions));
+	ssdb->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(tableOptions));
 	/*ssdb->options.filter_policy = rocksdb::NewBloomFilterPolicy(10);
 
 	ssdb->options.block_cache = rocksdb::NewLRUCache(opt.cache_size * 1048576);
 	ssdb->options.block_size = opt.block_size * 1024;*/
+	ssdb->options.target_file_size_base = 32 * 1024 * 1024;
 	ssdb->options.write_buffer_size = opt.write_buffer_size * 1024 * 1024;
 	/*ssdb->options.compaction_speed = opt.compaction_speed;*/
 	if(opt.compression == "yes"){
