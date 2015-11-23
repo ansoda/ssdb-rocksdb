@@ -28,12 +28,6 @@ SSDBImpl::~SSDBImpl(){
 	if(ldb){
 		delete ldb;
 	}
-	/*if(options.block_cache){
-		delete options.block_cache;
-	}
-	if(options.filter_policy){
-		delete options.filter_policy;
-	}*/
 }
 
 SSDB* SSDB::open(const Options &opt, const std::string &dir){
@@ -46,10 +40,7 @@ SSDB* SSDB::open(const Options &opt, const std::string &dir){
 	tableOptions.block_cache = rocksdb::NewLRUCache(opt.cache_size * 1048576);
 	tableOptions.block_size = opt.block_size * 1024;
 	ssdb->options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(tableOptions));
-	/*ssdb->options.filter_policy = rocksdb::NewBloomFilterPolicy(10);
 
-	ssdb->options.block_cache = rocksdb::NewLRUCache(opt.cache_size * 1048576);
-	ssdb->options.block_size = opt.block_size * 1024;*/
 	ssdb->options.target_file_size_base = 32 * 1024 * 1024;
 	ssdb->options.write_buffer_size = opt.write_buffer_size * 1024 * 1024;
 	/*ssdb->options.compaction_speed = opt.compaction_speed;*/
@@ -59,8 +50,17 @@ SSDB* SSDB::open(const Options &opt, const std::string &dir){
 		ssdb->options.compression = rocksdb::kNoCompression;
 	}
 
-	rocksdb::Status status;
+	auto env = rocksdb::Env::Default();
+	env->SetBackgroundThreads(8, rocksdb::Env::LOW);
+	env->SetBackgroundThreads(8, rocksdb::Env::HIGH);
+	ssdb->options.env = env;
+	ssdb->options.max_background_compactions = 8;
+	ssdb->options.max_background_flushes = 8;
 
+	ssdb->options.max_log_file_size = 0;
+	ssdb->options.keep_log_file_num = 5;
+
+	rocksdb::Status status;
 	status = rocksdb::DB::Open(ssdb->options, dir, &ssdb->ldb);
 	if(!status.ok()){
 		log_error("open db failed: %s", status.ToString().c_str());

@@ -24,7 +24,8 @@ case "$TARGET_OS" in
 		#PLATFORM_CFLAGS=""
         ;;
     Linux)
-        PLATFORM_CLIBS="-pthread"
+        # -s -Os是为了优化编译后可执行文件体积
+        PLATFORM_CLIBS="-pthread -s -Os"
         ;;
     OS_ANDROID_CROSSCOMPILE)
         PLATFORM_CLIBS="-pthread"
